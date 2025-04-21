@@ -1,0 +1,81 @@
+############# English navigation ##############
+
+# main menu
+[[main]]
+name = "Home"
+url = "/"
+weight = 1
+
+[[main]]
+name = "About"
+url = "/about"
+weight = 2
+
+[[main]]
+name = "Proposal"
+url = "https://tabiiiqwq.github.io/CS184_Project_Proposal/"
+weight = 3
+
+
+[[main]]
+name = "Milestone"
+url = "/milestone"
+weight = 4
+
+# [[main]]
+# name = "Elements"
+# url = "/elements"
+# weight = 3
+
+# [[main]]
+# weight = 4
+# name = "Pages"
+
+# [[main]]
+# parent = "Pages"
+# name = "Blog"
+# url = "/blog"
+
+# [[main]]
+# parent = "Pages"
+# name = "Contact"
+# url = "/contact"
+
+# [[main]]
+# name = "Authors"
+# url = "/authors"
+
+# [[main]]
+# parent = "Pages"
+# name = "Categories"
+# url = "/categories"
+
+# [[main]]
+# parent = "Pages"
+# name = "404 Page"
+# url = "/404"
+
+
+# footer menu
+[[footer]]
+name = "Home"
+url = "/"
+weight = 1
+
+
+[[footer]]
+name = "About"
+url = "/about"
+weight = 2
+
+
+
+# [[footer]]
+# name = "Elements"
+# url = "/elements"
+# weight = 2
+
+# [[footer]]
+# name = "Privacy Policy"
+# url = "/privacy-policy"
+# weight = 3
