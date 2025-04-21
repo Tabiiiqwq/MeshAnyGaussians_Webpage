@@ -3,7 +3,7 @@ title: "CS184 Project Milestone: MeshAnyGaussians"
 # meta title
 meta_title: ""
 # meta description
-description: "This is meta description"
+description: "Project Milestone"
 # save as draft
 draft: false
 ---
@@ -13,6 +13,9 @@ draft: false
 
 > Extract any object’s mesh efficiently via text selection from a scene
 
+### Milestone Video & Slides
+{{< button label="Watch Video" link="https://drive.google.com/file/d/1kzwibs5To3tr0XFcDgNVTS_ncoWL_x71/view?usp=drive_link" style="solid" >}}
+{{< button label="Slides" link="https://docs.google.com/presentation/d/143vAkm3PMOsH8M7PvMhJyXbqQhVTlQ8b/edit?slide=id.p1#slide=id.p1" style="solid" >}}
 
 ### What we have accomplished
 **Method**: We have the baseline code running now, which can generate a coarse mesh from a gaussian scene. Also, we have prepared a SOTA, industry-style mp4-to-gaussian script with minimal floaters and found a latest stereo-matching model, which will be both integrated into the baseline later. Finally, we are working on integrating the AdaptiveTSDF+IsoOctree method to extract mesh efficiently, while the gaussian segmentation is also under experimental.
