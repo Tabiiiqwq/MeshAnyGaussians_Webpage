@@ -22,6 +22,12 @@ name = "Milestone"
 url = "/milestone"
 weight = 4
 
+
+[[main]]
+name = "Final Report"
+url = "/write_up"
+weight = 5
+
 # [[main]]
 # name = "Elements"
 # url = "/elements"
