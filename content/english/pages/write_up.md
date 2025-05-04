@@ -8,6 +8,27 @@ description: "Final Report"
 draft: false
 ---
 # MeshAnyGaussians
+## Authors
+
+<div style="display: flex; justify-content: space-around; flex-wrap: wrap; margin: 40px 0;">
+  <div style="text-align: center; margin: 5px;">
+    <h3>Siyuan Xie</h3>
+    <p>UC Berkeley</p>
+  </div>
+  <div style="text-align: center; margin: 5px;">
+    <h3>Alper Gel</h3>
+    <p>UC Berkeley</p>
+  </div>
+  <div style="text-align: center; margin: 5px;">
+    <h3>Ryan Arlett</h3>
+    <p>UC Berkeley</p>
+  </div>
+  <div style="text-align: center; margin: 5px;">
+    <h3>Sihan Ren</h3>
+    <p>UC Berkeley</p>
+  </div>
+</div>
+
 
 ## Abstract
 
@@ -31,15 +52,15 @@ We decompose the overall pipeline into four subtasks: (1) 3DGS-based scene recon
 
 ### Gaussian Splatting for Accurate Reconstruction
 
-We begin by converting the input video into a dense Gaussian Splatting (GS) representation. To achieve this, we first sample the video at 2 fps, and only select the sharpest frames using a variety of OpenCV functions. Next, we run *SIFT* + COLMAP feature extraction followed by COLMAP matching. Finally, to optimize for speed, we utilize GLOMAP's mapper to complete the SFM process. 
+We begin by converting the input video into a dense Gaussian Splatting (GS) representation. To achieve this, we first sample the video at 2 fps, and only select the sharpest frames using a variety of OpenCV functions. Next, we run *SIFT-GPU* + *COLMAP* feature extraction followed by *COLMAP* matching [7][13]. Finally, to optimize for speed, we utilize *GLOMAP*'s mapper to complete the SFM process [8]. 
 
-To enhance the geometric accuracy of the resulting point cloud, we incorporate both pre- and post-processing steps. Specifically, we perform pseudo-depth estimation on the input video via *DepthAnythingV2* and use the resulting depth maps to regularize the 3DGS optimization. Additionally, after training, we apply a floater removal procedure based on density thresholds to eliminate spurious Gaussians.
+To enhance the geometric accuracy of the resulting point cloud, we incorporate both pre- and post-processing steps. Specifically, we perform pseudo-depth estimation on the input video via *DepthAnythingV2* and use the resulting depth maps to regularize the 3DGS optimization [1]. Additionally, after training, we apply a floater removal procedure based on density thresholds to eliminate spurious Gaussians.
 
-During training, we utilize the *Taming-3DGS* accelerated rasterization engine to achieve sub 20-minute training times on consumer GPU's (RTX 4070 mobile).
+During training, we utilize the *Taming-3DGS* accelerated rasterization engine to achieve sub 20-minute training times on consumer GPU's (RTX 4070 mobile) [12].
 
 ### Semantical Segmentation
 
-We model semantic segmentation on the Gaussian point cloud to introduce cross-point semantic awareness. To this end, we adopt the LangSplat framework to semantically enhance each 3D point by assigning it a language-relevant feature vector. Specifically, LangSplat uses the CLIP image encoder to extract language-aligned feature vectors (of dimension $D=512$) from semantic regions across training views. These features are then compressed into a lower-dimensional space $\mathbb{R}^d$ using a lightweight scene-adaptive autoencoder. The final $d$-dimensional embeddings ($d=3$) are used to supervise the semantic attributes of each Gaussian point.
+We model semantic segmentation on the Gaussian point cloud to introduce cross-point semantic awareness. To this end, we adopt the LangSplat framework to semantically enhance each 3D point by assigning it a language-relevant feature vector [5]. Specifically, LangSplat uses the CLIP image encoder to extract language-aligned feature vectors (of dimension $D=512$) from semantic regions across training views [11]. These features are then compressed into a lower-dimensional space $\mathbb{R}^d$ using a lightweight scene-adaptive autoencoder. The final $d$-dimensional embeddings ($d=3$) are used to supervise the semantic attributes of each Gaussian point.
 
 For each semantic level $l \in \{\text{subpart}, \text{part}, \text{whole}\}$, LangSplat defines an encoder $E$ and decoder $\Psi$ to project CLIP features $L_t^l(v) \in \mathbb{R}^D$ into latent space representations $H_t^l(v) = E(L_t^l(v)) \in \mathbb{R}^d$, and minimizes the reconstruction error through an autoencoding loss:
 
@@ -67,7 +88,7 @@ This process enforces cross-view semantic consistency and grants each 3D point t
 
 In parallel, we obtain high-quality depth estimates of the scene via stereo matching. For each training view, we synthesize a stereo pair by translating the camera slightly along the rightward (epipolar) direction and rendering a second image using the same 3DGS scene representation. Given that the two views are naturally aligned along the baseline, they can be directly fed into a stereo matching model to compute a dense depth map.
 
-For stereo inference, we adopt NVIDIA's state-of-the-art *FoundationStereo* model, which yields accurate depth predictions from rectified stereo pairs. Importantly, we choose stereo matching over monocular depth estimation methods such as Depth Anything, as the latter typically produce pseudo-depths bounded within $[0, 1]$ that are unsuitable for precise 3D reconstruction.
+For stereo inference, we adopt NVIDIA's state-of-the-art *FoundationStereo* model, which yields accurate depth predictions from rectified stereo pairs [4]. Importantly, we choose stereo matching over monocular depth estimation methods such as Depth Anything, as the latter typically produce pseudo-depths bounded within $[0, 1]$ that are unsuitable for precise 3D reconstruction.
 
 Additionally, due to the inherent noise in the Gaussian surfaces of 3DGS, we avoid computing depth directly from the expected volume density, which tends to produce unstable results. Instead, our stereo-based pipeline yields metrically accurate and globally consistent depth maps that can be reliably fused in the subsequent TSDF pipeline.
 
@@ -75,7 +96,7 @@ Additionally, due to the inherent noise in the Gaussian surfaces of 3DGS, we avo
 
 Finally, we extract a geometrically accurate mesh from the rendered heatmaps, depth maps, and associated camera parameters. We begin by masking the depth maps using the heatmaps to suppress irrelevant regions, setting those areas to zero. These masked depths are then fused into a continuous signed distance field using a TSDF integration method.
 
-To achieve both high extraction efficiency and adaptive mesh resolution, we adopt the classic **IsoOctree** method. This approach hierarchically partitions space using an octree structure, enabling efficient focus on regions where the signed distance function (SDF) exhibits sign changes. Furthermore, the method can condition on point cloud density to support spatially adaptive resolution control.
+To achieve both high extraction efficiency and adaptive mesh resolution, we adopt the classic **IsoOctree** method [10]. This approach hierarchically partitions space using an octree structure, enabling efficient focus on regions where the signed distance function (SDF) exhibits sign changes. Furthermore, the method can condition on point cloud density to support spatially adaptive resolution control.
 
 Specifically, we first construct a sparse octree where each node stores TSDF values at its voxel corners. For each voxel edge, we then build an associated **edge-tree**, a binary structure that encodes the multi-resolution sign-change status along that edge. If an edge contains a zero-crossing, we recursively traverse its edge-tree to identify the finest sub-edge containing the crossing, and interpolate the SDF values to obtain a well-defined **isovertex**.
 
@@ -89,7 +110,7 @@ This method enables consistent and high-fidelity mesh extraction from an unconst
 
 ### GS&Mesh Viewer
 
-Finally, we developed a Windows application based on DirectX11 to visualize both intermediate Gaussian Splatting (GS) results and final mesh outputs. The tool supports rendering `.PLY` files for GS data and `.OBJ` files for mesh geometry. The full renderer code is available on [Splat-Renderer](https://github.com/ryanfsa9/Splat-Renderer).
+Finally, we developed a Windows application based on DirectX11 to visualize both intermediate Gaussian Splatting (GS) results and final mesh outputs [9]. The tool supports rendering `.PLY` files for GS data and `.OBJ` files for mesh geometry. The full renderer code is available on [Splat-Renderer](https://github.com/ryanfsa9/Splat-Renderer).
 The renderer was built from scratch, with only a math helper file reused from a prior project. We first implemented a basic Windows GUI with file loading and camera control. On the CPU, we parsed `.PLY` files to extract Gaussian attributes (position, color, opacity, rotation, scale) and computed their covariance matrices. The initial rendering loop sorted Gaussians by depth and alpha-blended each onto the screen, but ignored rotation and ran slowly. We then transitioned to DirectX11 for GPU acceleration, implementing a full rendering pipeline: the vertex shader projects each Gaussian and computes its 2D covariance; the geometry shader builds a rotated quad per Gaussian; and the pixel shader computes Gaussian alpha blending per pixel. This GPU-based pipeline significantly improved performance and visual fidelity.
 
 <img src="../../../images/AD_4nXd8Sdc8KF3UR1Qmz5G3KXcl3anagW2tfA-1uMdtygYUhNSJfjVaHnzyIYC6d8w4Tl5bE6B3CA64laL8q3eDEVwBRGGz4YCI-pd5Y3sAj53hV-S9MdQ5BU7F2emQnT1u5AY.png" alt="img" style="zoom:50%;" />
@@ -132,6 +153,17 @@ input-image-frame	|	mesh_view_1	|	mesh_view_2	|	mesh_view_3
 
 9. **Direct3D 11**  
    Microsoft. *Programming Guide for Direct3D 11*. Microsoft Learn, 2019, https://learn.microsoft.com/en-us/windows/win32/direct3d11/atoc-dx-graphics-direct3d-11. :contentReference[oaicite:8]{index=8}
+
+10. **IsoOctree**  
+    Kazhdan, Michael. "Unconstrained Isosurface Extraction on Arbitrary Octrees." *Symposium on Geometry Processing*, 2008, https://www.cs.jhu.edu/~misha/Code/IsoOctree/. :contentReference[oaicite:9]{index=9}
+
+11. **OpenCLIP**  
+    Ilharco, Gabriel, et al. "OpenCLIP." *Zenodo*, Jul. 2021, https://doi.org/10.5281/zenodo.5143773. :contentReference[oaicite:10]{index=10}
+
+12. **Taming 3DGS**  
+    Mallick, Saswat Subhajyoti, Rahul Goel, Bernhard Kerbl, Markus Steinberger, Francisco Vicente Carrasco, and Fernando De La Torre. "Taming 3DGS: High-Quality Radiance Fields with Limited Resources." *SIGGRAPH Asia 2024 Conference Papers*, Association for Computing Machinery, 2024, https://doi.org/10.1145/3680528.3687694. :contentReference[oaicite:11]{index=11}
+13. **SiftGPU**  
+    Wu, Changchang. "SiftGPU: A GPU Implementation of Scale Invariant Feature Transform (SIFT)." *GitHub*, 2007, https://github.com/pitzer/SiftGPU.git. :contentReference[oaicite:12]{index=12}
 
 
 ## Contributions
