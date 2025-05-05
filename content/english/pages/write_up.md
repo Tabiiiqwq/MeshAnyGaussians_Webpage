@@ -234,8 +234,12 @@ Our finished GS renderer runs at a smooth 120 frames per second, and produces th
 
 
 
-{{< image src="images/bonsai_mesh.png" caption="" alt="alter-text" height="" width="" position="center" command="fill" option="q100" class="img-fluid" title="image title"  webp="false" >}}
-{{< video src="images/bonsai.mp4" width="100%" height="300px" autoplay="false" loop="false" muted="false" controls="true" class="rounded-lg" >}}
+<table>
+  <tr>
+    <td>{{< image src="images/final_report/bonsai_mesh.png" caption="" alt="alter-text" height="" width="" position="center" command="fill" option="q100" class="img-fluid" title="image title"  webp="false" >}}</td>
+    <td>{{< video src="images/final_report/bonsai.mp4" width="100%" height="300px" autoplay="false" loop="false" muted="false" controls="true" class="rounded-lg" >}}</td>
+  </tr>
+</table>
 
 > Example render result
 
