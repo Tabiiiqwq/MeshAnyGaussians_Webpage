@@ -27,7 +27,9 @@ draft: false
   </div>
 </div>
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/H-UI4PXZIiI?si=mWkCHTdFyfNmjM1r" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+<div style="display: flex; justify-content: center; margin: 20px 0;">
+  <iframe width="560" height="315" src="https://www.youtube.com/embed/H-UI4PXZIiI?si=mWkCHTdFyfNmjM1r" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+</div>
 
 Link to [this webpage](https://tabiiiqwq.github.io/MeshAnyGaussians_Webpage/write_up/) | [slides](https://www.canva.com/design/DAGmT1m-D3o/Aag6hFMcBTjkOBQC4FoPrQ/view?utm_content=DAGmT1m-D3o&utm_campaign=designshare&utm_medium=link2&utm_source=uniquelinks&utlId=h5d9df55ce9) 
 
@@ -232,11 +234,11 @@ Our finished GS renderer runs at a smooth 120 frames per second, and produces th
 
 
 
-{{< image src="images/final_report/AD_4nXd8Sdc8KF3UR1Qmz5G3KXcl3anagW2tfA-1uMdtygYUhNSJfjVaHnzyIYC6d8w4Tl5bE6B3CA64laL8q3eDEVwBRGGz4YCI-pd5Y3sAj53hV-S9MdQ5BU7F2emQnT1u5AY.png" caption="" alt="alter-text" height="" width="" position="center" command="fill" option="q100" class="img-fluid" title="image title"  webp="false" >}}
+{{< image src="images/bonsai_mesh.png" caption="" alt="alter-text" height="" width="" position="center" command="fill" option="q100" class="img-fluid" title="image title"  webp="false" >}}
+{{< video src="images/bonsai.mp4" width="100%" height="300px" autoplay="false" loop="false" muted="false" controls="true" class="rounded-lg" >}}
 
 > Example render result
 
-Once the GS renderer was functional, implementing the mesh renderer was straightforward. We parsed `.OBJ` files into GPU buffers and used basic diffuse lighting in our shaders. DirectX handled triangle rasterization, and we simply rendered indexed geometry to the screen. With both modules integrated, our application can now efficiently render both Gaussian splats and traditional meshes for side-by-side analysis.
 
 
 ## Results
