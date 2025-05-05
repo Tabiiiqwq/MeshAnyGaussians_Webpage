@@ -39,7 +39,7 @@ Our pipeline works in several stages: First, we convert video into a Gaussian Sp
 
 After the objects are separated, we utilize an improved mesh reconstruction algorithm guided by local point density via a state of the art Stereo-Matching model. We apply TSDF fusion in conjunction with an Iso-Octree structure to adaptively extract high-quality meshes from the masked depth regions, overcoming the limitations of previous approaches.
 
-To visualize our results, we've implemented a custom DirectX11-based renderer capable of displaying both the extracted meshes and the intermediate Gaussian splatting scenes for comparison. Our implementation combines existing GS libraries (for video-to-GS conversion and object separation) with our own algorithms for mesh reconstruction and rendering.
+Finally, to visualize our results, we've implemented a custom DirectX11-based renderer capable of displaying both the extracted meshes and the intermediate Gaussian splatting scenes for comparison. Our pipeline combines existing GS libraries (for video-to-GS conversion and object separation) with our own algorithms for mesh reconstruction and rendering.
 
 {{< image src="images/final_report/pipeline.png" caption="" alt="alter-text" height="" width="" position="center" command="fill" option="q100" class="img-fluid" title="image title"  webp="false" >}}
 
