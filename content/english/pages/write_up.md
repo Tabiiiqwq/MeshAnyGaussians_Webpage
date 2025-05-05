@@ -27,9 +27,9 @@ draft: false
   </div>
 </div>
 
-Should be a video iframe here; teaser
-Link to this webpage
-Link to slides version
+Should be a video iframe here; teaser  
+Link to this webpage  
+Link to slides version  
 
 ## Abstract
 
@@ -83,14 +83,59 @@ We decompose the overall pipeline into four subtasks: (1) 3DGS-based scene recon
 
 We begin by converting the input video into a dense Gaussian Splatting (GS) representation. To achieve this, we first sample the video at 2 fps, and only select the sharpest frames using a variety of OpenCV functions. Next, we run *SIFT-GPU* + *COLMAP* feature extraction followed by *COLMAP* matching [7][13]. Finally, to optimize for speed, we utilize *GLOMAP*'s mapper to complete the SFM process [8]. 
 
-
 During training, we utilize the *Taming-3DGS* + Fused SSIM accelerated rasterization engine to achieve sub 20-minute training times on consumer GPU's (RTX 4070 mobile) [12].
 
-### Semantical Segmentation
+### Language-Driven Semantic Query and Visualization
 
-We model semantic segmentation on the Gaussian point cloud to introduce cross-point semantic awareness. To this end, we adopt the LangSplat framework to semantically enhance each 3D point by assigning it a language-relevant feature vector [5]. 
+To support natural language interaction with 3D representations, we propose a two-stage pipeline centered around image-space query and visualization, with an optional extension for extracting semantic 3D Gaussians based on prompt alignment.
 
-TODO: add what we do in this part.
+#### Stage 1: Per-View Query and Visualization
+
+Our core pipeline enables language-based visualization by operating on latent semantic features extracted from each training view. Specifically, we first decode per-pixel features $F_t$ from each view $t$ into the CLIP-aligned embedding space using a trained decoder $\Psi$, obtaining:
+
+$$
+\hat{F}_t = \Psi(F_t) \in \mathbb{R}^{H \times W \times D}
+$$
+
+Given a set of textual prompts $\{p_k\}$, we compute a similarity score for each pixel:
+
+$$
+S_t^{(i,j,k)} = \text{sim}(\hat{F}_t^{(i,j)},\; \phi(p_k))
+$$
+
+Here, $\phi(p_k)$ denotes the CLIP embedding of prompt $p_k$. The similarity maps are smoothed via local averaging and normalized, followed by thresholding with $\tau$ to produce binary masks:
+
+$$
+M_t^{(k)} = \mathbb{1}[S_t^{(k)} > \tau]
+$$
+
+Among all CLIP attention heads, we select the one with the highest global response for each prompt to generate the final visualization. The system outputs per-prompt heatmaps, binary masks, and composite visual overlays. This stage is implemented via the `activate_stream()` and `text_query()` routines, and supports tasks such as semantic segmentation, text-guided editing, and interactive inspection of the 3D scene from 2D projections.
+
+#### Stage 2 (Optional): Prompt-Guided 3D Gaussian Extraction
+
+As an alternative or complementary step, we offer a method to extract subsets of 3D Gaussians that consistently correspond to a given prompt across multiple views. Each 3D point $x_i$ is projected into the image plane of view $t$ via:
+
+$$
+x_{i,t}^{2D} = \pi_t(x_i) = \mathbf{K}_t \left( \mathbf{R}_t x_i + \mathbf{t}_t \right)
+$$
+
+A point receives a binary vote if its projection falls inside the activated mask $M_t^{(k)}$ and passes a depth consistency check with rendered depth $D_t$:
+
+$$
+z_i < D_t(x_{i,t}^{2D}) \cdot (1 + \epsilon)
+$$
+
+We accumulate votes across all views and select points that are activated in at least $V$ images:
+
+$$
+\text{mask}\_k(i) = \mathbb{1} \left[ \sum\_{t=1}^{T} M_t^{(k)}(\pi_t(x_i)) \geq V \right]
+$$
+
+This yields a prompt-specific semantic subset of Gaussians, saved as a new PLY file. This extended module supports occlusion filtering, resolution control, and enables downstream applications like phrase-conditioned subcloud editing or text-guided mesh extraction.
+
+
+
+
 
 ### Stereo Matching
 
