@@ -27,9 +27,7 @@ draft: false
   </div>
 </div>
 
-<div style="display: flex; justify-content: center; margin: 20px 0;">
-  <iframe width="560" height="315" src="https://www.youtube.com/embed/H-UI4PXZIiI?si=mWkCHTdFyfNmjM1r" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
-</div>
+{{< youtube H-UI4PXZIiI >}}
 
 Link to [this webpage](https://tabiiiqwq.github.io/MeshAnyGaussians_Webpage/write_up/) | [slides](https://www.canva.com/design/DAGmT1m-D3o/Aag6hFMcBTjkOBQC4FoPrQ/view?utm_content=DAGmT1m-D3o&utm_campaign=designshare&utm_medium=link2&utm_source=uniquelinks&utlId=h5d9df55ce9) 
 
