@@ -124,6 +124,10 @@ Table needed:
 
 input-image-frame	|	mesh_view_1	|	mesh_view_2	|	mesh_view_3
 
+### Publicly Released Code
+1. **Splat Renderer**: https://github.com/ryanfsa9/Splat-Renderer 
+2. **Complete Video to Mesh Training Pipeline**: https://github.com/alpergel/final-project.git
+
 ## References
 
 1. **Depth Anything V2**  
