@@ -81,11 +81,12 @@ We decompose the overall pipeline into four subtasks: (1) 3DGS-based scene recon
 
 ### Gaussian Splatting for Accurate Reconstruction
 
-We begin by converting the input video into a dense Gaussian Splatting (GS) representation. To achieve this, we first sample the video at 2 fps, and only select the sharpest frames using a variety of OpenCV functions. Next, we run *SIFT-GPU* + *COLMAP* feature extraction followed by *COLMAP* matching [7][13]. Finally, to optimize for speed, we utilize *GLOMAP*'s mapper to complete the SFM process [8]. 
+Our pipeline begins by converting the input video into a Gaussian Splatting scene. To achieve this, we first sample the video at 2 fps, and only select the sharpest frames using a variety of OpenCV functions. Next, we run *SIFT-GPU* + *COLMAP* feature extraction followed by *COLMAP* matching [7][13]. Finally, to optimize for speed, we utilize *GLOMAP*'s mapper to complete the SFM process [8]. These functions combined allow for a 3D reconstruction of the camera poses, giving the SFM precursor that gaussian splatting requires. During training, we utilize the *Taming-3DGS* + Fused SSIM accelerated rasterization engine to achieve sub 20-minute training times on consumer GPU's (RTX 4070 mobile) [12]. 
 
-During training, we utilize the *Taming-3DGS* + Fused SSIM accelerated rasterization engine to achieve sub 20-minute training times on consumer GPU's (RTX 4070 mobile) [12].
+Since we are building off of the Gaussian-Splatting-Lightning library, our work here entailed compiling seamless docker pipelines via docker-compose where the script calls the relevant docker container, runs the code required, and exits moving on to the subsequent task [6]. This allows any computer, with any OS to run our code, given they have an NVIDIA CUDA powered GPU. Overall, the goal of our work in this segment was to bring together existing libraries to create a seamless, robust, and quick video to gaussian splat pipeline, that can be easily utilized for subsequent pipeline stages.
 
-### Language-Driven Semantic Query and Visualization
+
+### Language-Driven Semantic Query/Visualization
 
 To support natural language interaction with 3D representations, we propose a two-stage pipeline centered around image-space query and visualization, with an optional extension for extracting semantic 3D Gaussians based on prompt alignment.
 
@@ -139,11 +140,10 @@ This yields a prompt-specific semantic subset of Gaussians, saved as a new PLY f
 
 ### Stereo Matching
 
-In parallel, we obtain high-quality depth estimates of the scene via stereo matching. For each training view, we synthesize a stereo pair by translating the camera slightly along the rightward (epipolar) direction and rendering a second image using the same 3DGS scene representation. Given that the two views are naturally aligned along the baseline, they can be directly fed into a stereo matching model to compute a dense depth map.
+In parallel with the segmentation process, we also obtain high-quality depth estimates of the scene via iterative stereo matching. In short, the stereo matcher uses the difference in object positions between two renders with slightly shifted camera positions to compute depth. For each training view, we artificially translate the gaussian view camera slightly rightword, and render a second image using the same 3DGS scene representation. Since we know each image from this process is aligned along the baseline, they can be reliably fed into a stereo matching model to compute a dense depth map. When picking the right model to perform the stereo-matching process, we opted to utilize NVIDIA’s state-of-the-art FoundationStereo model, given its recent release and significant advances. This model robustly yields accurate depth predictions from rectified stereo image pairs [4]. 
 
-For stereo inference, we adopt NVIDIA's state-of-the-art *FoundationStereo* model, which yields accurate depth predictions from rectified stereo pairs [4]. Importantly, we choose stereo matching over monocular depth estimation methods such as Depth Anything, as the latter typically produce pseudo-depths bounded within $[0, 1]$ that are unsuitable for precise 3D reconstruction.
+Initially we attempted to use DepthAnythingV2, which is a monocular (single-view) depth estimation model, but these models produce pseudo-depths bounded between $[0, 1]$ that are unsuitable for precise 3D reconstruction, proven through our initial noisy outputs. Further, due to the inherent noise in the Gaussian surfaces of 3DGS, we avoid computing depth directly from the expected volume density, since this also produced unstable results based on our preliminary testing. Instead, our stereo-based pipeline yields metrically accurate and globally consistent depth maps that can be reliably used by our mesh generation algorithm.
 
-Additionally, due to the inherent noise in the Gaussian surfaces of 3DGS, we avoid computing depth directly from the expected volume density, which tends to produce unstable results. Instead, our stereo-based pipeline yields metrically accurate and globally consistent depth maps that can be reliably fused in the subsequent TSDF pipeline.
 
 ### Mesh Reconstruction
 
@@ -172,6 +172,7 @@ The renderer was built from scratch, with only a math helper file reused from a 
 > Example render result
 
 Once the GS renderer was functional, implementing the mesh renderer was straightforward. We parsed `.OBJ` files into GPU buffers and used basic diffuse lighting in our shaders. DirectX handled triangle rasterization, and we simply rendered indexed geometry to the screen. With both modules integrated, our application can now efficiently render both Gaussian splats and traditional meshes for side-by-side analysis.
+
 
 ## Results
 
