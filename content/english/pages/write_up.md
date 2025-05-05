@@ -33,11 +33,13 @@ Link to slides version
 
 ## Abstract
 
-3D Gaussian Splatting (3DGS) is a classical method for accurate scene reconstruction. Since Gaussian splats serve as an implicit geometric primitive, prior works have attempted to convert them into explicit mesh representations to enable compatibility with modern industrial pipelines, such as SuGaR, GS2Mesh, and others. However, existing approaches often suffer from poor surface quality and undesirable object adhesion, which significantly limits their practicality in real-world applications.
+We have developed a pipeline that extracts high-quality meshes of user-specified objects from an input video. Our approach builds upon 3D Gaussian Splatting (3DGS), a powerful method for accurate scene reconstruction. While Gaussian splats serve as an implicit geometric primitive, converting them into explicit mesh representations to enable compatibility with modern industrial pipelines remains challenging. Existing approaches like SuGaR and GS2Mesh often suffer from poor surface quality and undesirable object adhesion, which significantly limits their practicality.
 
-To address these issues, we propose a pipeline with an adaptive mesh extraction process guided by local point density, coupled with a semantic-aware segmenting strategy. Specifically, we leverage a post-training process to augment an existing Gaussian scene with semantic information, resulting in a semantically enriched point cloud. Based on a text query, we render consistent multi-view depth maps and semantic masks. We then apply TSDF fusion in conjunction with an Iso-Octree structure to adaptively extract high-quality meshes from the masked depth regions.
+Our pipeline works in several stages: First, we convert video into a Gaussian Splatting scene, then isolate specific objects based on text input through a semantic-aware segmentation strategy. For this, we leverage a post-training process to augment the Gaussian scene with semantic information, resulting in a semantically enriched point cloud. Based on the text query, we render consistent multi-view depth maps and semantic masks.
 
-In summary, our system enables high-quality mesh extraction of arbitrary objects specified by text input, given a video of a scene. Additionally, we implement a custom renderer that seamlessly supports both Gaussian splatting and the extracted mesh representation.
+After the objects are separated, we utilize an improved mesh reconstruction algorithm guided by local point density via a state of the art Stereo-Matching model. We apply TSDF fusion in conjunction with an Iso-Octree structure to adaptively extract high-quality meshes from the masked depth regions, overcoming the limitations of previous approaches.
+
+To visualize our results, we've implemented a custom DirectX11-based renderer capable of displaying both the extracted meshes and the intermediate Gaussian splatting scenes for comparison. Our implementation combines existing GS libraries (for video-to-GS conversion and object separation) with our own algorithms for mesh reconstruction and rendering.
 
 {{< image src="images/final_report/pipeline.png" caption="" alt="alter-text" height="" width="" position="center" command="fill" option="q100" class="img-fluid" title="image title"  webp="false" >}}
 
@@ -134,9 +136,7 @@ $$
 
 This yields a prompt-specific semantic subset of Gaussians, saved as a new PLY file. This extended module supports occlusion filtering, resolution control, and enables downstream applications like phrase-conditioned subcloud editing or text-guided mesh extraction.
 
-
-
-
+For this component, work also went towards pipelining it to work with our other components, in addition to fitting it within the Docker build infrastructure. Once this was complete, our group updated the CLIP model utilized from the OpenCLIP library, due to the out-of-date model choices of the LangSplat library [11]. As a further note for the reader, LangSplat utilizes the antiquated Segment-Anything-Model (SAM), which is significantly slower and produces worse segmentations than the recently released SAM 2.1 model series [2]. Due to this, a significant amount of our time for this stage was spent attempting to upgrade the SAM model, but due to a major difference in model inference infrastructure, and library configuration mismatches, we were unable to complete this upgrade. 
 
 ### Stereo Matching
 
@@ -147,13 +147,39 @@ Initially we attempted to use DepthAnythingV2, which is a monocular (single-view
 
 ### Mesh Reconstruction
 
-Finally, we extract a geometrically accurate mesh from the rendered heatmaps, depth maps, and associated camera parameters. We begin by masking the depth maps using the heatmaps to suppress irrelevant regions, setting those areas to zero. These masked depths are then fused into a continuous signed distance field using a TSDF integration method.
+Finally, we extract a geometrically accurate mesh from the rendered heatmaps, depth maps, and associated camera parameters. We begin by masking the depth maps using the heatmaps to suppress irrelevant regions, setting those areas to zero. These masked depths are then fused into a continuous signed distance field using a Truncated Signed Distance Function (TSDF) integration scheme.
+
+To build the TSDF field, we evaluate the signed distance between each voxel center and its projections in all training views. Let $x \in \mathbb{R}^3$ be a voxel center and let $D_t$ be the depth map of view $t$. The signed distance at $x$ is computed as:
+
+$$
+\text{TSDF}_t(x) = \frac{D_t(\pi_t(x)) - \| x - c_t \|}{\delta(x)}
+$$
+
+where $\pi_t(x)$ is the projection of $x$ onto the image plane of camera $t$, $c_t$ is the camera center, and $\delta(x)$ is the truncation distance—adaptively chosen based on projected depth or clamped to a global maximum $\delta_{\text{max}}$.
+
+Only pixels with valid depth estimates contribute to the TSDF. The per-voxel TSDF value is computed by weighted averaging across views:
+
+$$
+\text{TSDF}(x) = \frac{\sum_t w_t(x) \cdot \text{TSDF}_t(x)}{\sum_t w_t(x)}
+$$
+
+Here, the weight $w_t(x)$ is inversely proportional to the projected depth, favoring closer observations:
+
+$$
+w_t(x) = \frac{1}{\| x - c_t \| + \epsilon}
+$$
+
+We discard large negative TSDF values in voxels that fall behind observed surfaces, as these typically correspond to occluded or non-visible regions. To prevent reconstruction holes due to insufficient valid observations, we assign a fallback value of $-1$ to voxels that are consistently behind surfaces in multiple views.
+
+This fusion strategy avoids relying on surface normals, enabling compatibility with noisy or unstructured input depth maps. The resulting TSDF field is continuous, normalized, and suitable for iso-surface extraction.
 
 To achieve both high extraction efficiency and adaptive mesh resolution, we adopt the classic **IsoOctree** method [10]. This approach hierarchically partitions space using an octree structure, enabling efficient focus on regions where the signed distance function (SDF) exhibits sign changes. Furthermore, the method can condition on point cloud density to support spatially adaptive resolution control.
 
-Specifically, we first construct a sparse octree where each node stores TSDF values at its voxel corners. For each voxel edge, we then build an associated **edge-tree**, a binary structure that encodes the multi-resolution sign-change status along that edge. If an edge contains a zero-crossing, we recursively traverse its edge-tree to identify the finest sub-edge containing the crossing, and interpolate the SDF values to obtain a well-defined **isovertex**.
+Specifically, we first construct a sparse octree where each node stores TSDF values at its voxel corners. For each voxel edge, we then build an associated **edge-tree**, a binary structure that encodes the multi-resolution sign-change status along that edge. If an edge contains a zero-crossing, we recursively traverse its edge-tree to identify the finest sub-edge containing the crossing, and interpolate the SDF values to obtain a well-defined **isovertex**:
 
-{{< image src="images/final_report/image-20250503054122506.png" caption="" alt="alter-text" height="" width="" position="center" command="fill" option="q100" class="img-fluid" title="image title"  webp="false" >}}
+$$
+\text{isovertex} = \text{lerp}(x_a, x_b;\, \frac{\text{TSDF}(x_a)}{\text{TSDF}(x_a) - \text{TSDF}(x_b)})
+$$
 
 For each leaf node in the octree, we extract iso-edges from its six faces using a marching squares–style algorithm. When a face borders a finer-resolution neighbor, we copy the precomputed iso-edges from the finer node to ensure boundary consistency. To prevent open surfaces, we check all isovertices with valence one and trace their symmetric counterparts through the edge-tree to form twin connections, closing any incomplete iso-contours.
 
@@ -161,9 +187,10 @@ Ultimately, every iso-edge is shared by exactly two faces, guaranteeing that the
 
 This method enables consistent and high-fidelity mesh extraction from an unconstrained octree without requiring node refinement or vertex updates, achieving a balance between detail preservation and spatial sparsity.
 
-### GS&Mesh Viewer
 
-Finally, we developed a Windows application based on DirectX11 to visualize both intermediate Gaussian Splatting (GS) results and final mesh outputs [9]. The tool supports rendering `.PLY` files for GS data and `.OBJ` files for mesh geometry. The full renderer code is available on [Splat-Renderer](https://github.com/ryanfsa9/Splat-Renderer).
+### GS&Mesh Viewer
+To view our results (both the intermediate Gaussian Splatting scenes and our output meshes), we created a DirectX11 based windows application from scratch that can render both `.PLY` (GS) and `.OBJ` (Mesh) files [9].
+
 
 The renderer was built from scratch, with only a math helper file reused from a prior project. We first implemented a basic Windows GUI with file loading and camera control. On the CPU, we parsed `.PLY` files to extract Gaussian attributes (position, color, opacity, rotation, scale) and computed their covariance matrices. The initial rendering loop sorted Gaussians by depth and alpha-blended each onto the screen, but ignored rotation and ran slowly. We then transitioned to DirectX11 for GPU acceleration, implementing a full rendering pipeline: the vertex shader projects each Gaussian and computes its 2D covariance; the geometry shader builds a rotated quad per Gaussian; and the pixel shader computes Gaussian alpha blending per pixel. This GPU-based pipeline significantly improved performance and visual fidelity.
 
