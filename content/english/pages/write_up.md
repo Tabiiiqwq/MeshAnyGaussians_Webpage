@@ -202,10 +202,37 @@ This method enables consistent and high-fidelity mesh extraction from an unconst
 
 
 ### GS&Mesh Viewer
-To view our results (both the intermediate Gaussian Splatting scenes and our output meshes), we created a DirectX11 based windows application from scratch that can render both `.PLY` (GS) and `.OBJ` (Mesh) files [9].
+To view our results (both the intermediate Gaussian Splatting scenes and our output meshes), we created a DirectX11 based windows application from scratch that can render both .PLY (GS) and .OBJ (Mesh) files.
+For our starting point, we began with an empty visual studio project, and the only starter code we used was a math helper file (containing classes for vectors, quaternions, and matrices) written by Ryan for a past project. The vertex shader code in [16] was also very helpful later on as a reference, although we ended up writing a slightly different one ourselves.
+Our first task was to get a simple windows application up with a menu bar to select files and keyboard input handling for camera movement. As Ryan had prior experience with the Windows graphics API, this process was relatively seamless. After that, we wrote a function to parse an input .PLY file to extract the Gaussians (positions, colors, opacity, rotations and scales), and calculate the Gaussians covariance matrices as RSSTRT as described in [14]. From there we sorted all the gaussians based on depth. During this process, the gaussians’ positions are first transformed by the camera’s view matrix to find the depth, then sorted using the standard library std::sort.
+Next, for our first attempt at rendering the scene, we looped through each Gaussian, in order, alpha blending them onto the screen. This meant, for each Gaussian, projecting its position and scales into clip space. For simplicity, for now we ignored rotation, both of the camera and of gaussians, and just treated them as axis aligned 2D gaussian blobs with the projected x and y scale components as their standard deviations. Finally, we loop through every pixel on the screen, calculating the gaussians alpha value at that pixel's position on clip space using the standard equation for a gaussian distribution, and alpha blend the gaussians color onto the pixel based on the calculated alpha value. Though this ignored the rotations of the gaussians and the camera, it still gave somewhat decent results, considering most Gaussians were fairly spherical. It also ran very slowly (~1 fps), as everything was being done on the CPU. This is what we had done by our milestone, and is how we generated our milestone images.
+At this point we decided to switch to DirectX11, as we were already in effect performing a vertex shader on each Gaussian (projecting to clip space), then a pixel shader to blend each pixel, so the algorithm lended itself naturally to the GPU. For this transition the DirectX sample projects were helpful [9] to get the necessary setup right.
+Now, properly handling the rotations involves complicated math as described in [15], so here we decided to find a reference solution to help. We found a WebGL based GS renderer [16], which helped immensely with the math in our vertex shader described below. The main difference between our implementation and this reference solution is that they draw instanced quads, passing the quad into the vertex shader, then get the Gaussian data for that quad by sampling a texture, and then do the math to find the correct position and rotation for the quad. 
+Instead, our renderer passes the Gaussian data directly into the vertex shader, then generates the rotated quad by using a geometry shader in between the vertex and pixel shaders. This seems to us like the more natural way to do it, and avoids packing and unpacking the data through a texture. It also means the math in the vertex shader is done only once per Gaussian, instead of 4 times for each vertex of that Gaussian’s quad. Our final GS rendering process is described below:
+1. Initialize the windows app and DirectX
+2. Parse input .PLY file and put Gaussian data (positions, colors, covariance matrices) into vertex buffer on GPU.
+3. Spawn background CPU thread to asynchronous sort Gaussians, and flag main thread to update GPU vertex buffer when done.
+4. Tell DirectX to render the Gaussian data using our shaders below
+5. Vertex Shader: (Takes in per-gaussian data)
+   - Project position to clip space using camera view and projection matrices
+   - Project Covariance matrix to clip space using camera view matrix and the affine approximation of the projection matrix. Now have a 2D covariance matrix representing a 2D gaussian in clip space.
+   - Find the eigenvalues and eigenvectors of this matrix. If you think of the 2D gaussian as a rotated ellipse the major/minor axes are the eigenvectors scaled by their eigenvalues. Pass these "major/minor axes" to the Geometry shader.
+6. Geometry Shader: (Takes in output of vertex shader)
+   - Generate a rotated quad (two triangles) to surround this 2D gaussian. Spans two standard deviations from the center in each direction (2 major/minor axes).
+   - GPU rasterizes these triangles for us.
+7. Pixel/Fragment Shader
+   - Using the pixel's local position in the quad (which is already normalized by the standard deviation in each direction), calculate the alpha value of the gaussian at that pixel, and then alpha blend the gaussians color onto the render target.
+
+Our finished GS renderer runs at a smooth 120 frames per second, and produces the same visual results as [16]. We also allow for keyboard and mouse input for camera movement and rotation, and provide a file opening menu to easily open different files. With the GS renderer completed, the mesh renderer was very simple to implement as we already had the DirectX setup completed. Since the GPU handles the triangle rasterization for us, all we had to do for the mesh renderer was:
+1. Initialize windows app and DirectX
+2. Parse the input .OBJ file into vertex and index buffers to load onto the GPU
+3. Write simple diffuse lighting vertex and pixel shaders
+4. Tell DirectX to draw the indexed triangles and present the result to the screen.
 
 
-The renderer was built from scratch, with only a math helper file reused from a prior project. We first implemented a basic Windows GUI with file loading and camera control. On the CPU, we parsed `.PLY` files to extract Gaussian attributes (position, color, opacity, rotation, scale) and computed their covariance matrices. The initial rendering loop sorted Gaussians by depth and alpha-blended each onto the screen, but ignored rotation and ran slowly. We then transitioned to DirectX11 for GPU acceleration, implementing a full rendering pipeline: the vertex shader projects each Gaussian and computes its 2D covariance; the geometry shader builds a rotated quad per Gaussian; and the pixel shader computes Gaussian alpha blending per pixel. This GPU-based pipeline significantly improved performance and visual fidelity.
+
+
+
 
 {{< image src="images/final_report/AD_4nXd8Sdc8KF3UR1Qmz5G3KXcl3anagW2tfA-1uMdtygYUhNSJfjVaHnzyIYC6d8w4Tl5bE6B3CA64laL8q3eDEVwBRGGz4YCI-pd5Y3sAj53hV-S9MdQ5BU7F2emQnT1u5AY.png" caption="" alt="alter-text" height="" width="" position="center" command="fill" option="q100" class="img-fluid" title="image title"  webp="false" >}}
 
@@ -278,7 +305,12 @@ input-image-frame	|	mesh_view_1	|	mesh_view_2	|	mesh_view_3
     Mallick, Saswat Subhajyoti, Rahul Goel, Bernhard Kerbl, Markus Steinberger, Francisco Vicente Carrasco, and Fernando De La Torre. "Taming 3DGS: High-Quality Radiance Fields with Limited Resources." *SIGGRAPH Asia 2024 Conference Papers*, Association for Computing Machinery, 2024, https://doi.org/10.1145/3680528.3687694. :contentReference[oaicite:11]{index=11}
 13. **SiftGPU**  
     Wu, Changchang. "SiftGPU: A GPU Implementation of Scale Invariant Feature Transform (SIFT)." *GitHub*, 2007, https://github.com/pitzer/SiftGPU.git. :contentReference[oaicite:12]{index=12}
-
+14. **GS Paper**
+   Kerbl, Bernhard, et al. 3D Gaussian Splatting for Real-Time Radiance Field Rendering. ACM Transactions on Graphics, vol. 42, no. 4, 2023, Article 1912. Association for Computing Machinery, https://doi.org/10.1145/3592433
+15. **GS Math Paper**
+   Zwicker, Matthias, et al. EWA Volume Splatting. Proceedings of IEEE Visualization 2001, edited by Thomas Ertl, Klaus I. Joy, and Amitabh Varshney, IEEE Computer Society, 2001, pp. 29–36.
+16. **WebGL GS Viewer** 
+   antimatter15. splat. GitHub, 2025, https://github.com/antimatter15/splat.
 
 ## Contributions
 
