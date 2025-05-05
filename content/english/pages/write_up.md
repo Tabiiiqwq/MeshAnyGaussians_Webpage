@@ -87,7 +87,9 @@ Our pipeline begins by converting the input video into a Gaussian Splatting scen
 
 Since we are building off of the Gaussian-Splatting-Lightning library, our work here entailed compiling seamless docker pipelines via docker-compose where the script calls the relevant docker container, runs the code required, and exits moving on to the subsequent task [6]. This allows any computer, with any OS to run our code, given they have an NVIDIA CUDA powered GPU. Overall, the goal of our work in this segment was to bring together existing libraries to create a seamless, robust, and quick video to gaussian splat pipeline, that can be easily utilized for subsequent pipeline stages.
 
-<div class="video-comparison-container" style="display: flex; justify-content: space-between; gap: 20px;">
+{{< video src="images/IMG_0747.mp4" width="100%" height="auto" autoplay="false" loop="false" muted="false" controls="true" class="rounded-lg" >}}
+
+{{<div class="video-comparison-container" style="display: flex; justify-content: space-between; gap: 20px;">
   <div style="flex: 1;">
     <video width="100%" height="auto" autoplay loop muted controls>
       <source src="images/IMG_0747.mp4" type="video/mp4">
@@ -102,7 +104,7 @@ Since we are building off of the Gaussian-Splatting-Lightning library, our work 
     </video>
     <p class="caption">Gaussian Splatting result</p>
   </div>
-</div>
+</div>}}
 
 > Example input video, output gaussian splatting scene (rendered in our own DirectX11 Renderer)
 
