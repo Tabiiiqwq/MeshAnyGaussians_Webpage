@@ -28,8 +28,8 @@ draft: false
 </div>
 
 Should be a video iframe here; teaser  
-Link to this webpage  
-Link to slides version  
+Link to this webpage: https://tabiiiqwq.github.io/MeshAnyGaussians_Webpage/write_up/
+Link to slides: https://www.canva.com/design/DAGmT1m-D3o/Aag6hFMcBTjkOBQC4FoPrQ/view?utm_content=DAGmT1m-D3o&utm_campaign=designshare&utm_medium=link2&utm_source=uniquelinks&utlId=h5d9df55ce9  
 
 ## Abstract
 
@@ -86,6 +86,11 @@ We decompose the overall pipeline into four subtasks: (1) 3DGS-based scene recon
 Our pipeline begins by converting the input video into a Gaussian Splatting scene. To achieve this, we first sample the video at 2 fps, and only select the sharpest frames using a variety of OpenCV functions. Next, we run *SIFT-GPU* + *COLMAP* feature extraction followed by *COLMAP* matching [7][13]. Finally, to optimize for speed, we utilize *GLOMAP*'s mapper to complete the SFM process [8]. These functions combined allow for a 3D reconstruction of the camera poses, giving the SFM precursor that gaussian splatting requires. During training, we utilize the *Taming-3DGS* + Fused SSIM accelerated rasterization engine to achieve sub 20-minute training times on consumer GPU's (RTX 4070 mobile) [12]. 
 
 Since we are building off of the Gaussian-Splatting-Lightning library, our work here entailed compiling seamless docker pipelines via docker-compose where the script calls the relevant docker container, runs the code required, and exits moving on to the subsequent task [6]. This allows any computer, with any OS to run our code, given they have an NVIDIA CUDA powered GPU. Overall, the goal of our work in this segment was to bring together existing libraries to create a seamless, robust, and quick video to gaussian splat pipeline, that can be easily utilized for subsequent pipeline stages.
+
+{{< video src="images/final_report/IMG_0747.mp4" width="100%" height="auto" autoplay="false" loop="false" muted="false" controls="true" class="rounded-lg" >}}
+{{< video src="images/final_report/bear_render_vid.mp4" width="100%" height="auto" autoplay="false" loop="false" muted="false" controls="true" class="rounded-lg" >}}
+
+> Example input video, output gaussian splatting scene (rendered in our own DirectX11 Renderer)
 
 
 ### Language-Driven Semantic Query/Visualization
@@ -190,11 +195,17 @@ This method enables consistent and high-fidelity mesh extraction from an unconst
 
 ### GS&Mesh Viewer
 To view our results (both the intermediate Gaussian Splatting scenes and our output meshes), we created a DirectX11 based windows application from scratch that can render both .PLY (GS) and .OBJ (Mesh) files.
+
 For our starting point, we began with an empty visual studio project, and the only starter code we used was a math helper file (containing classes for vectors, quaternions, and matrices) written by Ryan for a past project. The vertex shader code in [16] was also very helpful later on as a reference, although we ended up writing a slightly different one ourselves.
+
 Our first task was to get a simple windows application up with a menu bar to select files and keyboard input handling for camera movement. As Ryan had prior experience with the Windows graphics API, this process was relatively seamless. After that, we wrote a function to parse an input .PLY file to extract the Gaussians (positions, colors, opacity, rotations and scales), and calculate the Gaussians covariance matrices as RSSTRT as described in [14]. From there we sorted all the gaussians based on depth. During this process, the gaussians’ positions are first transformed by the camera’s view matrix to find the depth, then sorted using the standard library std::sort.
+
 Next, for our first attempt at rendering the scene, we looped through each Gaussian, in order, alpha blending them onto the screen. This meant, for each Gaussian, projecting its position and scales into clip space. For simplicity, for now we ignored rotation, both of the camera and of gaussians, and just treated them as axis aligned 2D gaussian blobs with the projected x and y scale components as their standard deviations. Finally, we loop through every pixel on the screen, calculating the gaussians alpha value at that pixel's position on clip space using the standard equation for a gaussian distribution, and alpha blend the gaussians color onto the pixel based on the calculated alpha value. Though this ignored the rotations of the gaussians and the camera, it still gave somewhat decent results, considering most Gaussians were fairly spherical. It also ran very slowly (~1 fps), as everything was being done on the CPU. This is what we had done by our milestone, and is how we generated our milestone images.
+
 At this point we decided to switch to DirectX11, as we were already in effect performing a vertex shader on each Gaussian (projecting to clip space), then a pixel shader to blend each pixel, so the algorithm lended itself naturally to the GPU. For this transition the DirectX sample projects were helpful [9] to get the necessary setup right.
+
 Now, properly handling the rotations involves complicated math as described in [15], so here we decided to find a reference solution to help. We found a WebGL based GS renderer [16], which helped immensely with the math in our vertex shader described below. The main difference between our implementation and this reference solution is that they draw instanced quads, passing the quad into the vertex shader, then get the Gaussian data for that quad by sampling a texture, and then do the math to find the correct position and rotation for the quad. 
+
 Instead, our renderer passes the Gaussian data directly into the vertex shader, then generates the rotated quad by using a geometry shader in between the vertex and pixel shaders. This seems to us like the more natural way to do it, and avoids packing and unpacking the data through a texture. It also means the math in the vertex shader is done only once per Gaussian, instead of 4 times for each vertex of that Gaussian’s quad. Our final GS rendering process is described below:
 1. Initialize the windows app and DirectX
 2. Parse input .PLY file and put Gaussian data (positions, colors, covariance matrices) into vertex buffer on GPU.
@@ -246,7 +257,7 @@ Once the GS renderer was functional, implementing the mesh renderer was straight
 
 {{< image src="images/final_report/ipad0001-0160.gif" caption="" alt="alter-text" height="" width="" position="center" command="fill" option="q100" class="img-fluid" title="image title"  webp="false" >}}
 
-### Publicly Released Code
+### Our Publicly Released Github Repos
 1. **Splat Renderer**: https://github.com/ryanfsa9/Splat-Renderer 
 2. **Complete Video to Mesh Training Pipeline**: https://github.com/alpergel/final-project.git
 
