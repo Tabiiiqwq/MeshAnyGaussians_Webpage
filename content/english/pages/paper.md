@@ -1,5 +1,5 @@
 ---
-title: "MeshAnyGaussians Write Up"
+title: "MeshAnyGaussians"
 # meta title
 meta_title: ""
 # meta description

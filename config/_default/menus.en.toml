@@ -7,26 +7,28 @@ url = "/"
 weight = 1
 
 [[main]]
-name = "About"
-url = "/about"
-weight = 2
-
-[[main]]
 name = "Proposal"
 url = "https://tabiiiqwq.github.io/CS184_Project_Proposal/"
-weight = 3
+weight = 2
 
 
 [[main]]
 name = "Milestone"
 url = "/milestone"
+weight = 3
+
+
+[[main]]
+name = "CS184 Style Report"
+url = "/write_up"
 weight = 4
 
 
 [[main]]
-name = "Final Report"
-url = "/write_up"
+name = "Paper"
+url = "/paper"
 weight = 5
+
 
 # [[main]]
 # name = "Elements"
