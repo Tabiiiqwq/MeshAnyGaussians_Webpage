@@ -86,18 +86,7 @@ We decompose the overall pipeline into four subtasks: (1) 3DGS-based scene recon
 Our pipeline begins by converting the input video into a Gaussian Splatting scene. To achieve this, we first sample the video at 2 fps, and only select the sharpest frames using a variety of OpenCV functions. Next, we run *SIFT-GPU* + *COLMAP* feature extraction followed by *COLMAP* matching [7][13]. Finally, to optimize for speed, we utilize *GLOMAP*'s mapper to complete the SFM process [8]. These functions combined allow for a 3D reconstruction of the camera poses, giving the SFM precursor that gaussian splatting requires. During training, we utilize the *Taming-3DGS* + Fused SSIM accelerated rasterization engine to achieve sub 20-minute training times on consumer GPU's (RTX 4070 mobile) [12]. 
 
 Since we are building off of the Gaussian-Splatting-Lightning library, our work here entailed compiling seamless docker pipelines via docker-compose where the script calls the relevant docker container, runs the code required, and exits moving on to the subsequent task [6]. This allows any computer, with any OS to run our code, given they have an NVIDIA CUDA powered GPU. Overall, the goal of our work in this segment was to bring together existing libraries to create a seamless, robust, and quick video to gaussian splat pipeline, that can be easily utilized for subsequent pipeline stages.
-<!-- {{< video-comparison 
-    src1="images/IMG_0747.mp4"
-    src2="images/bear_render_vid.mp4"
-    caption="Input video (left) and Gaussian Splatting result (right)"
-    alt="Video comparison showing input video and Gaussian Splatting output"
-    height=""
-    width=""
-    position="center"
-    class="img-fluid"
-    autoplay="true"
-    controls="true"
-    loop="true" >}} -->
+
 <div class="video-comparison-container" style="display: flex; justify-content: space-between; gap: 20px;">
   <div style="flex: 1;">
     <video width="100%" height="auto" autoplay loop muted controls>
