@@ -27,7 +27,7 @@ draft: false
   </div>
 </div>
 
-Should be a video iframe here; teaser  
+<iframe width="560" height="315" src="https://www.youtube.com/embed/H-UI4PXZIiI?si=mWkCHTdFyfNmjM1r" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
 Link to [this webpage](https://tabiiiqwq.github.io/MeshAnyGaussians_Webpage/write_up/) | [slides](https://www.canva.com/design/DAGmT1m-D3o/Aag6hFMcBTjkOBQC4FoPrQ/view?utm_content=DAGmT1m-D3o&utm_campaign=designshare&utm_medium=link2&utm_source=uniquelinks&utlId=h5d9df55ce9) 
 
@@ -87,8 +87,8 @@ Our pipeline begins by converting the input video into a Gaussian Splatting scen
 
 Since we are building off of the Gaussian-Splatting-Lightning library, our work here entailed compiling seamless docker pipelines via docker-compose where the script calls the relevant docker container, runs the code required, and exits moving on to the subsequent task [6]. This allows any computer, with any OS to run our code, given they have an NVIDIA CUDA powered GPU. Overall, the goal of our work in this segment was to bring together existing libraries to create a seamless, robust, and quick video to gaussian splat pipeline, that can be easily utilized for subsequent pipeline stages.
 
-{{< video src="images/final_report/IMG_0747.mp4" width="100%" height="auto" autoplay="false" loop="false" muted="false" controls="true" class="rounded-lg" >}}
-{{< video src="images/final_report/bear_render_vid.mp4" width="100%" height="auto" autoplay="false" loop="false" muted="false" controls="true" class="rounded-lg" >}}
+{{< video src="images/final_report/IMG_0747.mp4" width="100%" height="300px" autoplay="false" loop="false" muted="false" controls="true" class="rounded-lg" >}}
+{{< video src="images/final_report/bear_render_vid.mp4" width="100%" height="300px" autoplay="false" loop="false" muted="false" controls="true" class="rounded-lg" >}}
 
 > Example input video, output gaussian splatting scene (rendered in our own DirectX11 Renderer)
 
