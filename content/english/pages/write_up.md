@@ -29,7 +29,7 @@ draft: false
 
 {{< youtube H-UI4PXZIiI >}}
 
-Link to [this webpage](https://tabiiiqwq.github.io/MeshAnyGaussians_Webpage/write_up/) | [slides](https://www.canva.com/design/DAGmT1m-D3o/Aag6hFMcBTjkOBQC4FoPrQ/view?utm_content=DAGmT1m-D3o&utm_campaign=designshare&utm_medium=link2&utm_source=uniquelinks&utlId=h5d9df55ce9) 
+Link to [this webpage](https://tabiiiqwq.github.io/MeshAnyGaussians_Webpage/write_up/) | [slides](https://www.canva.com/design/DAGmT1m-D3o/Aag6hFMcBTjkOBQC4FoPrQ/view?utm_content=DAGmT1m-D3o&utm_campaign=designshare&utm_medium=link2&utm_source=uniquelinks&utlId=h5d9df55ce9) | [video](https://www.youtube.com/watch?v=H-UI4PXZIiI)
 
 ## Abstract
 
