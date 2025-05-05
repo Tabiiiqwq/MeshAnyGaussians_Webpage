@@ -28,8 +28,8 @@ draft: false
 </div>
 
 Should be a video iframe here; teaser  
-Link to this webpage  
-Link to slides version  
+Link to this webpage: https://tabiiiqwq.github.io/MeshAnyGaussians_Webpage/write_up/
+Link to slides: https://www.canva.com/design/DAGmT1m-D3o/Aag6hFMcBTjkOBQC4FoPrQ/view?utm_content=DAGmT1m-D3o&utm_campaign=designshare&utm_medium=link2&utm_source=uniquelinks&utlId=h5d9df55ce9  
 
 ## Abstract
 
@@ -276,7 +276,7 @@ input-image-frame	|	mesh_view_1	|	mesh_view_2	|	mesh_view_3
 
 
 
-### Publicly Released Code
+### Our Publicly Released Github Repos
 1. **Splat Renderer**: https://github.com/ryanfsa9/Splat-Renderer 
 2. **Complete Video to Mesh Training Pipeline**: https://github.com/alpergel/final-project.git
 
