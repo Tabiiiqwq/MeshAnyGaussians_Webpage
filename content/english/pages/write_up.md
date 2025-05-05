@@ -241,21 +241,20 @@ Once the GS renderer was functional, implementing the mesh renderer was straight
 
 ## Results
 
-{{< image src="images/final_report/bear0001-0160.gif" caption="" alt="alter-text" height="" width="" position="center" command="fill" option="q100" class="img-fluid" title="image title"  webp="false" >}}
-
-{{< image src="images/final_report/bosai0001-0160.gif" caption="" alt="alter-text" height="" width="" position="center" command="fill" option="q100" class="img-fluid" title="image title"  webp="false" >}}
-
-{{< image src="images/final_report/box0001-0160.gif" caption="" alt="alter-text" height="" width="" position="center" command="fill" option="q100" class="img-fluid" title="image title"  webp="false" >}}
-
-{{< image src="images/final_report/candle0001-0160.gif" caption="" alt="alter-text" height="" width="" position="center" command="fill" option="q100" class="img-fluid" title="image title"  webp="false" >}}
-
-{{< image src="images/final_report/cat0001-0160.gif" caption="" alt="alter-text" height="" width="" position="center" command="fill" option="q100" class="img-fluid" title="image title"  webp="false" >}}
-
-{{< image src="images/final_report/doll0001-0160.gif" caption="" alt="alter-text" height="" width="" position="center" command="fill" option="q100" class="img-fluid" title="image title"  webp="false" >}}
-
-{{< image src="images/final_report/grape0001-0160.gif" caption="" alt="alter-text" height="" width="" position="center" command="fill" option="q100" class="img-fluid" title="image title"  webp="false" >}}
-
-{{< image src="images/final_report/ipad0001-0160.gif" caption="" alt="alter-text" height="" width="" position="center" command="fill" option="q100" class="img-fluid" title="image title"  webp="false" >}}
+<table>
+  <tr>
+    <td>{{< image src="images/final_report/bear0001-0160.gif" caption="" alt="bear" class="img-fluid" >}}</td>
+    <td>{{< image src="images/final_report/bosai0001-0160.gif" caption="" alt="bosai" class="img-fluid" >}}</td>
+    <td>{{< image src="images/final_report/box0001-0160.gif" caption="" alt="box" class="img-fluid" >}}</td>
+    <td>{{< image src="images/final_report/candle0001-0160.gif" caption="" alt="candle" class="img-fluid" >}}</td>
+  </tr>
+  <tr>
+    <td>{{< image src="images/final_report/cat0001-0160.gif" caption="" alt="cat" class="img-fluid" >}}</td>
+    <td>{{< image src="images/final_report/doll0001-0160.gif" caption="" alt="doll" class="img-fluid" >}}</td>
+    <td>{{< image src="images/final_report/grape0001-0160.gif" caption="" alt="grape" class="img-fluid" >}}</td>
+    <td>{{< image src="images/final_report/ipad0001-0160.gif" caption="" alt="ipad" class="img-fluid" >}}</td>
+  </tr>
+</table>
 
 ### Our Publicly Released Github Repos
 1. **Splat Renderer**: https://github.com/ryanfsa9/Splat-Renderer 
