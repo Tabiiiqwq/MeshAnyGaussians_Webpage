@@ -7,8 +7,6 @@ description: "Final Report"
 # save as draft
 draft: false
 ---
-# MeshAnyGaussians
-## Authors
 
 <div style="display: flex; justify-content: space-around; flex-wrap: wrap; margin: 40px 0;">
   <div style="text-align: center; margin: 5px;">
@@ -29,6 +27,9 @@ draft: false
   </div>
 </div>
 
+Should be a video iframe here; teaser
+Link to this webpage
+Link to slides version
 
 ## Abstract
 
@@ -38,17 +39,45 @@ To address these issues, we propose a pipeline with an adaptive mesh extraction 
 
 In summary, our system enables high-quality mesh extraction of arbitrary objects specified by text input, given a video of a scene. Additionally, we implement a custom renderer that seamlessly supports both Gaussian splatting and the extracted mesh representation.
 
-<img src="../../../images/Flowchart.png" alt="img" style="zoom:50%;" />
+{{< image src="images/final_report/pipeline.png" caption="" alt="alter-text" height="" width="" position="center" command="fill" option="q100" class="img-fluid" title="image title"  webp="false" >}}
 
-> Teaser
+## Related Works
 
-## Method:
+### Gaussian Splatting and Volume Rendering
 
-<img src="../../../images/AD_4nXcY-9zhGHkVj4S3lkdyV499en38HuInQLHBudkN2DNWI_ZbAC0BjHVQb8n19cx3XklB6z7vDto2XhkJ4CXZdpJ6w-twD9DRP8SSsUd-037yk9GETUwAkQF4BiI0p1VCx31Ihx3_.jpeg" alt="img" style="zoom:50%;" />
+Recent advances in neural rendering have proposed numerous techniques for efficient scene representation and novel-view synthesis. Volumetric approaches such as NeRF model the scene as a continuous radiance field, rendering images via volumetric ray marching. Specifically, the color $C$ of a pixel is computed as:
 
-> Pipeline Image
+$$
+C = \sum_{i=1}^{N} T_i \alpha_i c_i
+$$
+
+The transmittance $T_i$ is defined as $T_i = \prod_{j=1}^{i-1} (1 - \alpha_j)$, and the opacity is given by $\alpha_i = 1 - \exp(-\sigma_i \delta_i)$, where $\sigma_i$ and $\delta_i$ denote the density and interval length at the $i$-th sample, respectively.
+
+While this formulation provides high fidelity, it requires dense and costly sampling per ray. In contrast, point-based and Gaussian splatting methods use discrete primitives projected directly onto the image plane. Each 3D Gaussian is defined by a position, an anisotropic covariance matrix, and a view-dependent color, often represented via spherical harmonics. When projected to 2D, these Gaussians are rasterized using alpha blending with visibility ordering, leading to the same image formation model as NeRF, but with $\alpha_i$ derived from the projected 2D Gaussian opacity. This enables real-time rendering and efficient training by avoiding expensive ray marching, while retaining the continuous nature and high quality of volumetric representations through a compact set of explicit 3D Gaussians.
+
+### Spatial Language Embedding
+
+Recent work has extended 3D Gaussian Splatting to encode semantic and language-aligned information into radiance fields. LangSplat introduces a mechanism to supervise each 3D Gaussian with CLIP-derived embeddings extracted from training views. To achieve this, high-dimensional CLIP features ($\mathbb{R}^{512}$) are first compressed into a lower-dimensional latent space ($\mathbb{R}^d$) using a scene-adaptive autoencoder. 
+
+For each semantic level (subpart, part, whole), LangSplat learns view-specific latent targets via reconstruction. Each 3D Gaussian is assigned a learnable embedding $f_i^l \in \mathbb{R}^d$, rendered into views using alpha-composited splatting. The rendered semantic map is defined as:
+
+$$
+F_t^l(v) = \sum_{i \in \mathcal{N}(v)} f_i^l \cdot \alpha_i \cdot \prod_{j=1}^{i-1}(1 - \alpha_j)
+$$
+
+where $\alpha_i$ denotes the opacity of the $i$-th Gaussian and $\mathcal{N}(v)$ is the set of Gaussians overlapping pixel $v$. Supervision is provided by minimizing the discrepancy between projected features and the ground-truth latent embeddings:
+
+$$
+\mathcal{L_{\text{lang}}} = \sum_{t=1}^T \sum_{l \in \{s, p, w\}} \text{dist}(F_t^l(v), H_t^l(v))
+$$
+
+where the target feature $H_t^l(v)$ is the compressed CLIP embedding at that same pixel and level. Training aligns rendered and target features. This design enables per-Gaussian language conditioning and view-consistent semantic representations, allowing downstream applications such as natural language querying and part segmentation.
+
+## Method
 
 We decompose the overall pipeline into four subtasks: (1) 3DGS-based scene reconstruction, (2) semantic information extraction from the optimized Gaussian points, (3) depth estimation guided by text input, and (4) mesh extraction from masked depth maps using TSDF and iso-octree fusion.
+
+{{< image src="images/final_report/Flowchart.png" caption="" alt="alter-text" height="" width="" position="center" command="fill" option="q100" class="img-fluid" title="image title"  webp="false" >}}
 
 ### Gaussian Splatting for Accurate Reconstruction
 
@@ -59,29 +88,9 @@ During training, we utilize the *Taming-3DGS* + Fused SSIM accelerated rasteriza
 
 ### Semantical Segmentation
 
-We model semantic segmentation on the Gaussian point cloud to introduce cross-point semantic awareness. To this end, we adopt the LangSplat framework to semantically enhance each 3D point by assigning it a language-relevant feature vector [5]. Specifically, LangSplat uses the CLIP image encoder to extract language-aligned feature vectors (of dimension $D=512$) from semantic regions across training views [11]. These features are then compressed into a lower-dimensional space $\mathbb{R}^d$ using a lightweight scene-adaptive autoencoder. The final $d$-dimensional embeddings ($d=3$) are used to supervise the semantic attributes of each Gaussian point.
+We model semantic segmentation on the Gaussian point cloud to introduce cross-point semantic awareness. To this end, we adopt the LangSplat framework to semantically enhance each 3D point by assigning it a language-relevant feature vector [5]. 
 
-For each semantic level $l \in \{\text{subpart}, \text{part}, \text{whole}\}$, LangSplat defines an encoder $E$ and decoder $\Psi$ to project CLIP features $L_t^l(v) \in \mathbb{R}^D$ into latent space representations $H_t^l(v) = E(L_t^l(v)) \in \mathbb{R}^d$, and minimizes the reconstruction error through an autoencoding loss:
-
-$$
-\mathcal{L}_{\text{ae}} = \sum_{t=1}^T \sum_{l \in \{s, p, w\}} \text{dist}\left( \Psi(E(L_t^l(v))),\; L_t^l(v) \right)
-$$
-
-Each 3D Gaussian point $i$ is assigned a learnable embedding $f_i^l \in \mathbb{R}^d$ corresponding to its language feature at level $l$. These features are rendered into each training view using a tile-based Gaussian Splatting renderer, producing a per-pixel semantic projection:
-
-$$
-F_t^l(v) = \sum_{i \in \mathcal{N}(v)} f_i^l \cdot \alpha_i \cdot \prod_{j=1}^{i-1}(1 - \alpha_j)
-$$
-
-where $\alpha_i$ denotes the opacity contribution of the $i$-th Gaussian to pixel $v$, and $\mathcal{N}(v)$ is the set of Gaussians covering $v$.
-
-To train the language features of 3D points, LangSplat encourages consistency between the rendered features $F_t^l(v)$ and the ground truth latent features $H_t^l(v)$ at each pixel position:
-
-$$
-\mathcal{L}_{\text{lang}} = \sum_{t=1}^T \sum_{l \in \{s, p, w\}} \text{dist}\left( F_t^l(v),\; H_t^l(v) \right)
-$$
-
-This process enforces cross-view semantic consistency and grants each 3D point the ability to respond to natural language queries, while preserving sharp semantic boundaries. After training, any textual phrase can be embedded using the CLIP text encoder and matched against the learned 3D features to produce heatmap-style query responses.
+TODO: add what we do in this part.
 
 ### Stereo Matching
 
@@ -99,7 +108,7 @@ To achieve both high extraction efficiency and adaptive mesh resolution, we adop
 
 Specifically, we first construct a sparse octree where each node stores TSDF values at its voxel corners. For each voxel edge, we then build an associated **edge-tree**, a binary structure that encodes the multi-resolution sign-change status along that edge. If an edge contains a zero-crossing, we recursively traverse its edge-tree to identify the finest sub-edge containing the crossing, and interpolate the SDF values to obtain a well-defined **isovertex**.
 
-![image-20250503054122506](../../../images/image-20250503054122506.png)
+{{< image src="images/final_report/image-20250503054122506.png" caption="" alt="alter-text" height="" width="" position="center" command="fill" option="q100" class="img-fluid" title="image title"  webp="false" >}}
 
 For each leaf node in the octree, we extract iso-edges from its six faces using a marching squares–style algorithm. When a face borders a finer-resolution neighbor, we copy the precomputed iso-edges from the finer node to ensure boundary consistency. To prevent open surfaces, we check all isovertices with valence one and trace their symmetric counterparts through the edge-tree to form twin connections, closing any incomplete iso-contours.
 
@@ -110,9 +119,10 @@ This method enables consistent and high-fidelity mesh extraction from an unconst
 ### GS&Mesh Viewer
 
 Finally, we developed a Windows application based on DirectX11 to visualize both intermediate Gaussian Splatting (GS) results and final mesh outputs [9]. The tool supports rendering `.PLY` files for GS data and `.OBJ` files for mesh geometry. The full renderer code is available on [Splat-Renderer](https://github.com/ryanfsa9/Splat-Renderer).
+
 The renderer was built from scratch, with only a math helper file reused from a prior project. We first implemented a basic Windows GUI with file loading and camera control. On the CPU, we parsed `.PLY` files to extract Gaussian attributes (position, color, opacity, rotation, scale) and computed their covariance matrices. The initial rendering loop sorted Gaussians by depth and alpha-blended each onto the screen, but ignored rotation and ran slowly. We then transitioned to DirectX11 for GPU acceleration, implementing a full rendering pipeline: the vertex shader projects each Gaussian and computes its 2D covariance; the geometry shader builds a rotated quad per Gaussian; and the pixel shader computes Gaussian alpha blending per pixel. This GPU-based pipeline significantly improved performance and visual fidelity.
 
-<img src="../../../images/AD_4nXd8Sdc8KF3UR1Qmz5G3KXcl3anagW2tfA-1uMdtygYUhNSJfjVaHnzyIYC6d8w4Tl5bE6B3CA64laL8q3eDEVwBRGGz4YCI-pd5Y3sAj53hV-S9MdQ5BU7F2emQnT1u5AY.png" alt="img" style="zoom:50%;" />
+{{< image src="images/final_report/AD_4nXd8Sdc8KF3UR1Qmz5G3KXcl3anagW2tfA-1uMdtygYUhNSJfjVaHnzyIYC6d8w4Tl5bE6B3CA64laL8q3eDEVwBRGGz4YCI-pd5Y3sAj53hV-S9MdQ5BU7F2emQnT1u5AY.png" caption="" alt="alter-text" height="" width="" position="center" command="fill" option="q100" class="img-fluid" title="image title"  webp="false" >}}
 
 > Example render result
 
@@ -123,6 +133,21 @@ Once the GS renderer was functional, implementing the mesh renderer was straight
 Table needed: 
 
 input-image-frame	|	mesh_view_1	|	mesh_view_2	|	mesh_view_3
+
+
+
+
+| Tables        |      Are      |  Cool |
+| ------------- | :-----------: | ----: |
+| col 3 is      | right-aligned | $1600 |
+| col 2 is      |   centered    |   $12 |
+| zebra stripes |   are neat    |    $1 |
+
+
+
+
+
+
 
 ### Publicly Released Code
 1. **Splat Renderer**: https://github.com/ryanfsa9/Splat-Renderer 

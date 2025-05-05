@@ -6,6 +6,7 @@ meta_title: ""
 description: "Project Milestone"
 # save as draft
 draft: false
+math: true
 ---
 ### Team36
 
