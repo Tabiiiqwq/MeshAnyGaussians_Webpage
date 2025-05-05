@@ -54,9 +54,8 @@ We decompose the overall pipeline into four subtasks: (1) 3DGS-based scene recon
 
 We begin by converting the input video into a dense Gaussian Splatting (GS) representation. To achieve this, we first sample the video at 2 fps, and only select the sharpest frames using a variety of OpenCV functions. Next, we run *SIFT-GPU* + *COLMAP* feature extraction followed by *COLMAP* matching [7][13]. Finally, to optimize for speed, we utilize *GLOMAP*'s mapper to complete the SFM process [8]. 
 
-To enhance the geometric accuracy of the resulting point cloud, we incorporate both pre- and post-processing steps. Specifically, we perform pseudo-depth estimation on the input video via *DepthAnythingV2* and use the resulting depth maps to regularize the 3DGS optimization [1]. Additionally, after training, we apply a floater removal procedure based on density thresholds to eliminate spurious Gaussians.
 
-During training, we utilize the *Taming-3DGS* accelerated rasterization engine to achieve sub 20-minute training times on consumer GPU's (RTX 4070 mobile) [12].
+During training, we utilize the *Taming-3DGS* + Fused SSIM accelerated rasterization engine to achieve sub 20-minute training times on consumer GPU's (RTX 4070 mobile) [12].
 
 ### Semantical Segmentation
 
